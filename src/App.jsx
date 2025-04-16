@@ -1,51 +1,49 @@
 import { useEffect, useState } from "react";
-import Description from "./components/Description/Description";
-import Feedback from "./components/Feedback/Feedback";
-import Options from "./components/Options/Options";
-import Notification from "./components/Notification/Notification";
+import { nanoid } from "nanoid";
+import ContactForm from "./components/ContactForm/ContactForm";
+import SearchBox from "./components/SearchBox/SearchBox";
+import ContactList from "./components/ContactList/ContactList";
 
-const getInitialFeedback = () => {
-  const saved = localStorage.getItem("feedback");
-  return saved ? JSON.parse(saved) : { good: 0, neutral: 0, bad: 0 };
+const getInitialContacts = () => {
+  const saved = localStorage.getItem("contacts");
+  return saved
+    ? JSON.parse(saved)
+    : [
+        { id: "id-1", name: "Rosie Simpson", number: "459-12-56" },
+        { id: "id-2", name: "Hermione Kline", number: "443-89-12" },
+        { id: "id-3", name: "Eden Clements", number: "645-17-79" },
+        { id: "id-4", name: "Annie Copeland", number: "227-91-26" },
+      ];
 };
 
 const App = () => {
-  const [feedback, setFeedback] = useState(getInitialFeedback);
+  const [contacts, setContacts] = useState(getInitialContacts);
+  const [filter, setFilter] = useState("");
 
-  const total = feedback.good + feedback.neutral + feedback.bad;
-  const positive = total ? Math.round((feedback.good / total) * 100) : 0;
+  const visibleContacts = contacts.filter((contact) =>
+    contact.name.toLowerCase().includes(filter.toLowerCase())
+  );
 
-  const updateFeedback = (type) => {
-    setFeedback((prev) => ({ ...prev, [type]: prev[type] + 1 }));
+  const addContact = (contact) => {
+    const newContact = { ...contact, id: nanoid() };
+    setContacts((prev) => [...prev, newContact]);
   };
 
-  const resetFeedback = () => {
-    setFeedback({ good: 0, neutral: 0, bad: 0 });
+  const deleteContact = (id) => {
+    setContacts((prev) => prev.filter((contact) => contact.id !== id));
   };
 
   useEffect(() => {
-    localStorage.setItem("feedback", JSON.stringify(feedback));
-  }, [feedback]);
+    localStorage.setItem("contacts", JSON.stringify(contacts));
+  }, [contacts]);
 
   return (
-    <>
-      <h1>Sip Happens Café</h1>
-      <Description />
-      <Options
-        onLeaveFeedback={updateFeedback}
-        onReset={resetFeedback}
-        hasFeedback={total > 0}
-      />
-      {total > 0 ? (
-        <Feedback
-          feedback={feedback}
-          total={total}
-          positivePercentage={positive}
-        />
-      ) : (
-        <Notification />
-      )}
-    </>
+    <div>
+      <h1>Phonebook</h1>
+      <ContactForm onAdd={addContact} />
+      <SearchBox value={filter} onChange={setFilter} />
+      <ContactList contacts={visibleContacts} onDelete={deleteContact} />
+    </div>
   );
 };
 
